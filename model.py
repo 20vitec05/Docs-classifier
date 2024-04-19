@@ -1,20 +1,44 @@
-from tensorflow import keras
+import pathlib
+import tensorflow as tf
+from keras.utils import image_dataset_from_directory
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, MaxPooling2D,Flatten, Dropout, Activation
-from keras.preprocessing.image import ImageDataGenerator    
+train_dir = pathlib.Path('Dataset/train')
+test_dir = pathlib.Path('Dataset/test')
 
-# train_dir = 'FishImgDataset/train'
-# test_dir = 'FishImgDataset/test'
-# val_dir = 'FishImgDataset/val'
-
-img_width, img_heiht = 400, 400
-input_shape = (img_width, img_heiht, 3)
+img_width, img_height = 400, 400
+input_shape = (img_width, img_height, 3)
 
 epochs = 30
 batch_size = 20
-# train_samples = 8791
-# test_samples = 2751
-# val_samples = 1760
+train_dataset = image_dataset_from_directory(
+    train_dir,
+    validation_split=0.2,
+    seed=2452,
+    batch_size=batch_size,
+    image_size=(img_height, img_width),
+    subset='training',
+    label_mode='categorical'
+)
+
+val_dataset = image_dataset_from_directory(
+    train_dir,
+    validation_split=0.2,
+    seed=2452,
+    batch_size=batch_size,
+    image_size=(img_height, img_width),
+    subset='validation',
+    label_mode='categorical'
+)
+
+test_dataset = image_dataset_from_directory(
+    test_dir,
+    batch_size=batch_size,
+    image_size=(img_height, img_width),
+    label_mode='categorical'
+)
+class_names = train_dataset.class_names
+num_classes = len(class_names)
 
 model = Sequential([
     Conv2D(32, (3,3), padding='same',activation='relu', input_shape = input_shape),
@@ -27,40 +51,14 @@ model = Sequential([
 
     Dense(128,activation='relu'),
     Dropout(0.5),
-    Dense(5,activation='softmax')
+    Dense(num_classes,activation='softmax')
 ])
+
+model.summary()
 
 model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
-datagen = ImageDataGenerator(rescale=1. / 255)
-train_generator = datagen.flow_from_directory(
-    train_dir,
-    target_size=(img_width,img_heiht),
-    batch_size=batch_size,
-    class_mode='categorical')
-
-val_generator = datagen.flow_from_directory(
-    val_dir,
-    target_size=(img_width,img_heiht),
-    batch_size=batch_size,
-    class_mode='categorical')
-
-test_generator = datagen.flow_from_directory(
-    test_dir,
-    target_size=(img_width,img_heiht),
-    batch_size=batch_size,
-    class_mode='categorical')
-
-model.fit_generator(
-    train_generator,
-    steps_per_epoch = train_samples // batch_size,
-    epochs=epochs,
-    validation_data=val_generator,
-    validation_steps = val_samples // batch_size)
-
-scores = model.evaluate_generator(test_generator, test_samples // batch_size)
-
-print('точность на тестовой выборке' + str(scores[1]))
-model.save_weights('classifier_weights.weights.h5')
+history = model.fit(train_dataset, validation_data= val_dataset, epochs= epochs)
+# model.save_weights('classifier_weights.weights.h5')
