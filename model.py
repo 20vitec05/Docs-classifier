@@ -61,4 +61,4 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 history = model.fit(train_dataset, validation_data= val_dataset, epochs= epochs)
-# model.save_weights('classifier_weights.weights.h5')
+model.save_weights('classifier_weights.weights.h5')
