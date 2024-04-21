@@ -1,16 +1,18 @@
 import pathlib
+import os
 import tensorflow as tf
 from keras.utils import image_dataset_from_directory
 from keras.models import Sequential
-from keras.layers import Dense, Conv2D, MaxPooling2D,Flatten, Dropout, Activation
+from keras.layers import Dense, Conv2D, MaxPooling2D,Flatten, Dropout
+
 train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
 
 img_width, img_height = 400, 400
 input_shape = (img_width, img_height, 3)
 
-epochs = 30
 batch_size = 20
+epochs= 30
 train_dataset = image_dataset_from_directory(
     train_dir,
     validation_split=0.2,
@@ -54,11 +56,6 @@ model = Sequential([
     Dense(num_classes,activation='softmax')
 ])
 
-model.summary()
-
 model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
-history = model.fit(train_dataset, validation_data= val_dataset, epochs= epochs)
-model.save_weights('classifier_weights.weights.h5')
