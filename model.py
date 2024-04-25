@@ -1,8 +1,14 @@
 import pathlib
+import tensorflow as tf
 from keras._tf_keras.keras.utils import image_dataset_from_directory
 from keras._tf_keras.keras.models import Sequential
 from keras._tf_keras.keras.layers import Dense, Dropout, GlobalAveragePooling2D
 from keras._tf_keras.keras.applications import ResNet50
+
+def preprocess(image, label):
+    image = tf.cast(image, tf.float32) / 255.0
+    return image, label
+
 train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
 
@@ -37,8 +43,14 @@ test_dataset = image_dataset_from_directory(
     image_size=(img_height, img_width),
     label_mode='categorical'
 )
+
 class_names = train_dataset.class_names
 num_classes = len(class_names)
+
+train_dataset = train_dataset.map(preprocess)
+val_dataset = val_dataset.map(preprocess)
+test_dataset = test_dataset.map(preprocess)
+
 
 base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
 
