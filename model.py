@@ -1,9 +1,7 @@
 import pathlib
-import os
-import tensorflow as tf
-from keras.utils import image_dataset_from_directory
-from keras.models import Sequential
-from keras.layers import Dense, Conv2D, MaxPooling2D,Flatten, Dropout
+from keras._tf_keras.keras.utils import image_dataset_from_directory
+from keras._tf_keras.keras.models import Sequential
+from keras._tf_keras.keras.layers import Dense, Conv2D, MaxPooling2D,Flatten, Dropout
 
 train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
