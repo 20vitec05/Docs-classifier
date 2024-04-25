@@ -1,12 +1,12 @@
 import pathlib
 from keras._tf_keras.keras.utils import image_dataset_from_directory
 from keras._tf_keras.keras.models import Sequential
-from keras._tf_keras.keras.layers import Dense, Conv2D, MaxPooling2D,Flatten, Dropout
-
+from keras._tf_keras.keras.layers import Dense, Dropout, GlobalAveragePooling2D
+from keras._tf_keras.keras.applications import ResNet50
 train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
 
-img_width, img_height = 400, 400
+img_width, img_height = 224, 224
 input_shape = (img_width, img_height, 3)
 
 batch_size = 20
@@ -40,18 +40,14 @@ test_dataset = image_dataset_from_directory(
 class_names = train_dataset.class_names
 num_classes = len(class_names)
 
+base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
+
 model = Sequential([
-    Conv2D(32, (3,3), padding='same',activation='relu', input_shape = input_shape),
-    MaxPooling2D((2,2),strides=2),
-
-    Conv2D(64, (3,3), padding='same',activation='relu'),
-    MaxPooling2D((2,2),strides=2),
-
-    Flatten(),
-
-    Dense(128,activation='relu'),
+    base_model,
+    GlobalAveragePooling2D(),
+    Dense(256, activation='relu'),
     Dropout(0.5),
-    Dense(num_classes,activation='softmax')
+    Dense(num_classes, activation='softmax') 
 ])
 
 model.compile(optimizer='adam',
