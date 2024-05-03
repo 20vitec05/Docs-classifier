@@ -1,13 +1,13 @@
 import pathlib
-import tensorflow as tf
-from keras._tf_keras.keras.utils import image_dataset_from_directory
-from keras._tf_keras.keras.models import Sequential
-from keras._tf_keras.keras.layers import Dense, Dropout, GlobalAveragePooling2D
-from keras._tf_keras.keras.applications import ResNet50
 
-def preprocess(image, label):
-    image = tf.cast(image, tf.float32) / 255.0
-    return image, label
+import tensorflow as tf
+from tensorflow.keras.utils import image_dataset_from_directory
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Dense, Dropout, RandomFlip, RandomRotation, Lambda
+import numpy as np
+from transformers import ViTImageProcessor, TFAutoModelForImageClassification
+from sklearn.utils.class_weight import compute_class_weight
+
 
 train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
@@ -15,8 +15,9 @@ test_dir = pathlib.Path('Dataset/test')
 img_width, img_height = 224, 224
 input_shape = (img_width, img_height, 3)
 
-batch_size = 20
+batch_size = 4
 epochs= 30
+
 train_dataset = image_dataset_from_directory(
     train_dir,
     validation_split=0.2,
@@ -46,22 +47,53 @@ test_dataset = image_dataset_from_directory(
 
 class_names = train_dataset.class_names
 num_classes = len(class_names)
+labels = []
+for images, labels_batch in train_dataset:
+    labels.extend(np.argmax(labels_batch, axis=1))
+class_weights = compute_class_weight('balanced', classes=np.unique(labels), y=labels)
+class_weights = dict(enumerate(class_weights))
 
-train_dataset = train_dataset.map(preprocess)
-val_dataset = val_dataset.map(preprocess)
-test_dataset = test_dataset.map(preprocess)
 
 
-base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
+model_name = "google/vit-base-patch16-224"
+# processor = ViTImageProcessor.from_pretrained(model_name)
+model = TFAutoModelForImageClassification.from_pretrained(model_name)
 
-model = Sequential([
-    base_model,
-    GlobalAveragePooling2D(),
-    Dense(256, activation='relu'),
-    Dropout(0.5),
-    Dense(num_classes, activation='softmax') 
-])
+loss_fn = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+model.compile(optimizer='adam', loss=loss_fn, metrics=['accuracy'])
 
-model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+model.fit(train_dataset, validation_data= val_dataset, epochs=10)
+model.evaluate(test_dataset)
+
+
+
+# base_model = TFAutoModelForImageClassification.from_pretrained(model_name)
+
+# data_augm = Sequential([
+#     RandomFlip('horizontal'),
+#     RandomRotation(0.2)
+# ])
+
+# fine_tuning = Sequential([
+#     Dense(512, activation='relu'),
+#     Dropout(0.25),
+#     Dense(256, activation='relu',kernel_regularizer='l2'),
+#     Dense(128, activation='relu',kernel_regularizer='l2'),
+#     Dense(num_classes, activation='softmax')
+# ])
+
+# input = Input(shape=input_shape)
+# x = data_augm(input)
+# x = processor(images=x, return_tensors="tf")
+# x = base_model(x, training=False)['logits']
+# output = fine_tuning(x)
+
+# model = Model(input, output)
+
+# model.compile(optimizer='SGD',
+#             loss='categorical_crossentropy',
+#             metrics=['accuracy'])
+
+# model.fit(train_dataset, validation_data= val_dataset, epochs= epochs)
+# model.save_weights('classifier_weights.weights.h5')
+# model.evaluate(test_dataset)
