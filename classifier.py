@@ -1,15 +1,22 @@
+import os
+
+import fitz
 import numpy as np
-import os, fitz
-from model import model, class_names
-from keras.utils import img_to_array
+from keras._tf_keras.keras.utils import img_to_array
 from PIL import Image
 
+from model import model, class_names
+
+
 model.load_weights('classifier_weights.weights.h5')
+
 if not os.path.isdir('Workspace/solution'):
     os.mkdir('Workspace/solution')
+
 for i in class_names:
     if not os.path.isdir(f'Workspace/solution/{i}'):
         os.mkdir(f'Workspace/solution/{i}')
+
 for j in os.listdir('Workspace/pdf/'):
     data = fitz.open(f'Workspace/pdf/{j}')
     for i in range(len(data)):

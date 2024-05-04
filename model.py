@@ -1,6 +1,7 @@
 import pathlib
 
 import tensorflow as tf
+
 from tensorflow.keras.utils import image_dataset_from_directory
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Input, Dense, Dropout, RandomFlip, RandomRotation, Lambda
