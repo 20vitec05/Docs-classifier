@@ -13,7 +13,7 @@ from sklearn.utils.class_weight import compute_class_weight
 train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
 
-img_width, img_height = 224, 224
+img_width, img_height = 400, 400
 input_shape = (img_width, img_height, 3)
 
 batch_size = 4
