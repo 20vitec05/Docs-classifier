@@ -14,6 +14,8 @@ train_dir = pathlib.Path('Dataset/train')
 test_dir = pathlib.Path('Dataset/test')
 
 model_name = "google/vit-base-patch16-224"
+processor = ViTImageProcessor.from_pretrained(model_name)
+model = TFAutoModelForImageClassification.from_pretrained(model_name)
 
 img_width, img_height = 400, 400
 input_shape = (img_width, img_height, 3)
@@ -53,25 +55,13 @@ for dataset in datasets:
 
 class_names = train_dataset.class_names
 num_classes = len(class_names)
-
-
 labels = []
 for images, labels_batch in train_dataset:
     labels.extend(np.argmax(labels_batch, axis=1))
-
-id2label = {str(i): label for i, label in enumerate(class_labels)}
-label2id = {v: k for k, v in id2label.items()}
-
 class_weights = compute_class_weight('balanced', classes=np.unique(labels), y=labels)
 class_weights = dict(enumerate(class_weights))
 
 
-processor = ViTImageProcessor.from_pretrained(model_name)
-model = TFAutoModelForImageClassification.from_pretrained(
-    model_name,
-    num_labels=len(class_labels),
-    id2label=id2label,
-    label2id=label2id,)
 
 
 loss_fn = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
